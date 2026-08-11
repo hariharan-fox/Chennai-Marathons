@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chennai Marathons — The Running Calendar for Chennai</title>
+<meta name="description" content="The directory of marathons, half marathons, 10Ks and fun runs happening in Chennai. Browse race dates, routes and organizer contacts, or list your own event.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FFFFFF;
+    --bg-alt:#F4F7FC;
+    --ink:#12151E;
+    --ink-80:rgba(18,21,30,.82);
+    --ink-60:rgba(18,21,30,.62);
+    --ink-40:rgba(18,21,30,.44);
+    --line:#E3E8F0;
+    --line-strong:#C9D3E3;
+    --accent:#2563EB;
+    --accent-dark:#1D4ED8;
+    --accent-tint:#EEF3FF;
+    --radius-lg:20px;
+    --radius-md:14px;
+    --radius-sm:10px;
+    --shadow-btn:0 6px 16px -6px rgba(37,99,235,.45);
+    --shadow-card:0 10px 28px -20px rgba(20,17,16,.25);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{ scroll-behavior:smooth; }
+  body{
+    font-family:'Inter', sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    font-size:15.5px;
+    font-weight:500;
+  }
+  h1{ font-family:'Anton', sans-serif; font-weight:400; letter-spacing:-0.005em; text-transform:uppercase; color:var(--ink); }
+  h2,h3{ font-weight:800; letter-spacing:-0.02em; color:var(--ink); }
+  p{ font-weight:500; }
+  strong{ font-weight:700; }
+  :focus-visible{ outline:2.5px solid var(--accent); outline-offset:2px; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+  a{ color:inherit; text-decoration:none; }
+  button{ font-family:inherit; cursor:pointer; background:none; border:none; color:inherit; }
+  img{ max-width:100%; display:block; }
+  .container{ max-width:1180px; margin:0 auto; padding:0 24px; }
+  @media (max-width:640px){ .container{ padding:0 18px; } }
+
+  /* ---------- Header ---------- */
+  header.site{
+    position:sticky; top:0; z-index:50;
+    background:rgba(255,255,255,.82);
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);
+  }
+  header.site .bar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 24px; max-width:1180px; margin:0 auto;
+  }
+  .wordmark{ font-family:'Anton', sans-serif; font-weight:400; font-size:18px; letter-spacing:0.01em; text-transform:uppercase; }
+  .wordmark .dim{ color:var(--accent); }
+  nav.main{ display:flex; gap:4px; align-items:center; }
+  nav.main a, nav.main button{
+    padding:11px 18px; border-radius:999px; font-size:14px; font-weight:700;
+    color:var(--ink-60); transition:all .15s ease;
+  }
+  nav.main a:hover, nav.main button:hover{ color:var(--ink); background:var(--bg-alt); }
+  nav.main a.active{ color:#fff; background:var(--accent); box-shadow:var(--shadow-btn); }
+
+  /* ---------- Buttons ---------- */
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    border-radius:999px; padding:12px 22px; font-size:14px; font-weight:800;
+    border:1px solid transparent; transition:all .15s ease; white-space:nowrap;
+  }
+  .btn-primary{ background:var(--accent); color:#fff; box-shadow:var(--shadow-btn); }
+  .btn-primary:hover{ background:var(--accent-dark); transform:translateY(-1px); box-shadow:0 10px 20px -8px rgba(37,99,235,.55); }
+  .btn-outline{ background:transparent; border-color:var(--line-strong); color:var(--ink); border-width:1.5px; }
+  .btn-outline:hover{ border-color:var(--accent); color:var(--accent-dark); }
+  .btn-quiet{ background:var(--bg-alt); color:var(--ink); }
+  .btn-quiet:hover{ background:var(--line); }
+  .btn-sm{ padding:8px 15px; font-size:12.5px; }
+  .btn-block{ width:100%; }
+
+  /* ---------- Hero ---------- */
+  .hero{ padding:64px 24px 48px; background:var(--bg); border-bottom:1px solid var(--line); }
+  .hero-inner{ max-width:1180px; margin:0 auto; display:grid; grid-template-columns:1fr 220px; gap:40px; align-items:start; }
+  @media (max-width:860px){ .hero-inner{ grid-template-columns:1fr; } }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace; font-size:11.5px; letter-spacing:.1em; font-weight:600;
+    color:var(--accent); text-transform:uppercase; margin-bottom:18px;
+  }
+  .hero h1{ font-size:clamp(34px, 5.6vw, 58px); line-height:0.98; }
+  .hero p.sub{ color:var(--ink-60); max-width:480px; margin-top:16px; font-size:16px; }
+  .hero-cta{ display:flex; gap:10px; margin-top:26px; flex-wrap:wrap; }
+  .hero-counters{ display:flex; flex-direction:column; gap:10px; margin-top:6px; }
+  @media (max-width:860px){ .hero-counters{ flex-direction:row; margin-top:28px; } .hero-counters .counter-card{ flex:1; } }
+  @media (max-width:480px){ .hero-counters{ flex-wrap:wrap; } }
+  .counter-card{ border:1.5px solid var(--line); border-radius:var(--radius-md); padding:16px 18px; background:var(--bg-alt); transition:border-color .15s ease; }
+  .counter-card:hover{ border-color:var(--accent); }
+  .counter-card .num{ font-family:'JetBrains Mono', monospace; font-size:24px; font-weight:700; color:var(--accent); line-height:1; }
+  .counter-card .lbl{ font-size:11px; color:var(--ink-60); text-transform:uppercase; letter-spacing:.05em; margin-top:6px; font-weight:700; }
+
+  /* ---------- Layout ---------- */
+  .layout{
+    max-width:1180px; margin:0 auto; padding:40px 24px 80px;
+    display:grid; grid-template-columns:240px minmax(0,1fr) 260px; gap:20px; align-items:start;
+  }
+  @media (max-width:980px){
+    .layout{ grid-template-columns:1fr; }
+    .layout .ads-col{ order:3; }
+    .layout main{ order:2; }
+    .layout .filters-col{ order:1; }
+  }
+
+  /* ---------- Filters ---------- */
+  .panel{ background:var(--bg); border:1px solid var(--line); border-radius:var(--radius-lg); padding:22px; }
+  .filter-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+  .filter-head h3{ font-size:15px; font-weight:800; }
+  .filter-toggle{ display:none; font-size:12px; font-weight:600; color:var(--ink-60); }
+  @media (max-width:767px){
+    .filter-toggle{ display:inline-flex; align-items:center; gap:4px; }
+    .filter-body.closed{ display:none; }
+  }
+  .filter-body{ margin-top:16px; }
+  .filter-group{ margin-bottom:22px; }
+  .filter-group:last-child{ margin-bottom:0; }
+  .flabel{
+    font-family:'JetBrains Mono', monospace; font-size:10.5px; text-transform:uppercase;
+    letter-spacing:.08em; color:var(--ink-40); margin-bottom:10px; display:block;
+  }
+  .chip-row{ display:flex; flex-wrap:wrap; gap:7px; }
+  .chip{
+    border:1.5px solid var(--line-strong); background:var(--bg); color:var(--ink-80);
+    font-size:12.5px; font-weight:700; padding:8px 13px; border-radius:999px; transition:all .12s ease;
+  }
+  .chip.selected{ background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:var(--shadow-btn); }
+  .chip:hover{ border-color:var(--accent); color:var(--accent-dark); }
+  select, input[type=text], input[type=email], input[type=tel], input[type=date], input[type=password], input[type=url], textarea{
+    width:100%; border:1.5px solid var(--line-strong); border-radius:var(--radius-sm); padding:13px 14px;
+    font-family:'Inter', sans-serif; font-size:14.5px; font-weight:500; color:var(--ink); background:#fff; transition:border-color .12s ease;
+  }
+  select:focus, input:focus, textarea:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-tint); }
+  select{ cursor:pointer; }
+  .clear-filters{ margin-top:18px; width:100%; border:1px solid var(--line); padding:10px; border-radius:999px; font-size:12.5px; font-weight:600; color:var(--ink-60); }
+  .clear-filters:hover{ border-color:var(--ink); color:var(--ink); }
+
+  /* ---------- Listings ---------- */
+  .listings-head{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:18px; }
+  .listings-head h2{ font-size:20px; }
+  .listings-head .count{ font-family:'JetBrains Mono', monospace; font-size:12.5px; color:var(--ink-40); }
+
+  .listing-card{
+    background:var(--bg); border:1.5px solid var(--line); border-radius:var(--radius-lg);
+    padding:22px; margin-bottom:14px; transition:border-color .15s ease, transform .15s ease, box-shadow .15s ease; cursor:pointer;
+  }
+  .listing-card:hover{ border-color:var(--accent); transform:translateY(-2px); box-shadow:var(--shadow-card); }
+  .listing-card .listing-main h3{ transition:color .12s ease; font-weight:800; }
+  .listing-card:hover .listing-main h3{ color:var(--accent-dark); }
+
+  .back-link{ display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:var(--ink-60); margin-bottom:22px; }
+  .back-link:hover{ color:var(--accent); }
+  .detail-head{ display:flex; gap:20px; align-items:flex-start; }
+  .dist-badge-lg{ flex:0 0 auto; background:var(--ink); color:#fff; border-radius:var(--radius-md); padding:16px 20px; text-align:center; min-width:80px; border-bottom:4px solid var(--accent); }
+  .dist-badge-lg .n{ font-family:'Anton', sans-serif; font-size:28px; font-weight:400; line-height:1; }
+  .dist-badge-lg .u{ font-size:10px; text-transform:uppercase; letter-spacing:.05em; opacity:.65; margin-top:4px; }
+  .detail-desc{ font-size:15px; color:var(--ink-80); margin-top:22px; line-height:1.7; }
+  .related-section{ margin-top:46px; padding-top:30px; border-top:1px solid var(--line); }
+  .related-grid .listing-card{ margin-bottom:12px; }
+  .listing-top{ display:flex; gap:16px; align-items:flex-start; }
+  .dist-badge{
+    flex:0 0 auto; background:var(--ink); color:#fff; border-radius:var(--radius-sm);
+    padding:12px 16px; text-align:center; min-width:70px; border-bottom:4px solid var(--accent);
+  }
+  .dist-badge .n{ font-family:'Anton', sans-serif; font-size:22px; font-weight:400; line-height:1; }
+  .dist-badge .u{ font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; opacity:.7; margin-top:4px; }
+  .listing-main{ flex:1; min-width:0; }
+  .listing-row1{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .listing-main h3{ font-size:18px; font-weight:700; letter-spacing:-0.01em; }
+  .listing-date{ font-family:'JetBrains Mono', monospace; font-size:12px; font-weight:700; color:var(--accent); white-space:nowrap; padding-top:3px; }
+  .listing-meta{ display:flex; gap:14px; flex-wrap:wrap; margin-top:6px; font-size:13px; font-weight:600; color:var(--ink-60); }
+  .listing-desc{ margin-top:10px; font-size:14px; font-weight:500; color:var(--ink-80); }
+  .listing-tags{ display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+  .tag-pill{ font-size:11px; font-weight:700; color:var(--accent-dark); background:var(--accent-tint); border:1px solid transparent; padding:4px 10px; border-radius:999px; }
+  .listing-contact{
+    margin-top:16px; padding-top:16px; border-top:1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+  }
+  .organizer strong{ display:block; font-size:13.5px; font-weight:800; }
+  .organizer span{ font-size:12px; font-weight:600; color:var(--ink-60); }
+  .contact-btns{ display:flex; gap:8px; flex-wrap:wrap; }
+
+  .empty-state{ background:var(--bg-alt); border:1px dashed var(--line-strong); border-radius:var(--radius-lg); padding:48px 24px; text-align:center; color:var(--ink-60); }
+  .empty-state h3{ font-size:16px; margin-bottom:6px; }
+
+  /* ---------- Ads ---------- */
+  .ad-slot{
+    border:1px solid var(--line); border-radius:var(--radius-lg); overflow:hidden; margin-bottom:16px;
+    background:var(--bg-alt); min-height:230px; display:flex; flex-direction:column;
+  }
+  .ad-slot .ad-label{
+    font-family:'JetBrains Mono', monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; padding:10px 14px 0;
+  }
+  .ad-slot .ad-body{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:22px; gap:10px; }
+  .ad-slot .ad-body img{ width:100%; border-radius:var(--radius-sm); margin-bottom:6px; }
+  .ad-slot strong{ font-size:13.5px; font-weight:700; }
+  .ad-slot p{ font-size:12px; color:var(--ink-60); max-width:190px; }
+  .ad-slot.filled{ background:#fff; }
+  .ad-slot.filled .ad-body{ padding:14px; }
+
+  /* ---------- Pages / forms ---------- */
+  .page-section{ max-width:720px; margin:0 auto; padding:60px 24px 90px; }
+  .page-head{ margin-bottom:30px; }
+  .page-head h1{ font-size:clamp(28px,5vw,38px); }
+  .page-head p{ color:var(--ink-60); margin-top:10px; font-size:15px; }
+
+  .card-form{ background:var(--bg); border:1px solid var(--line); border-radius:var(--radius-lg); padding:clamp(20px,4vw,36px); }
+  .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .form-grid .full{ grid-column:1 / -1; }
+  @media (max-width:640px){ .form-grid{ grid-template-columns:1fr; } }
+  .field label{ display:block; font-size:12.5px; font-weight:800; letter-spacing:.02em; text-transform:uppercase; color:var(--ink-80); margin-bottom:8px; }
+  .form-actions{ margin-top:26px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  .form-note{ background:var(--bg-alt); border:1px solid var(--line); color:var(--ink-60); font-size:12.5px; padding:12px 14px; border-radius:var(--radius-sm); margin-bottom:22px; }
+  .success-box{ background:var(--accent); color:#fff; padding:16px 18px; border-radius:var(--radius-sm); font-size:13.5px; font-weight:600; margin-bottom:20px; }
+  .checkbox-grid{ display:flex; flex-wrap:wrap; gap:14px; }
+  .checkbox-grid label{ display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:500; color:var(--ink-80); }
+
+  /* ---------- Admin ---------- */
+  .admin-shell{ max-width:920px; margin:0 auto; padding:50px 24px 90px; }
+  .admin-topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:26px; flex-wrap:wrap; gap:12px; }
+  .admin-topbar h1{ font-size:24px; }
+  .admin-tabs{ display:flex; gap:6px; margin-bottom:22px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:14px; }
+  .admin-tab{ padding:10px 17px; border-radius:999px; font-size:12.5px; font-weight:800; border:1.5px solid var(--line); color:var(--ink-60); }
+  .admin-tab.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .admin-row{
+    background:var(--bg); border:1px solid var(--line); border-radius:var(--radius-md); padding:16px 18px;
+    display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:10px; flex-wrap:wrap;
+  }
+  .admin-row .info strong{ display:block; font-size:14.5px; font-weight:700; }
+  .admin-row .info span{ font-size:12px; color:var(--ink-60); }
+  .status-pill{ font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:999px; text-transform:uppercase; letter-spacing:.03em; margin-left:8px; }
+  .status-pending{ background:var(--bg-alt); color:var(--ink-60); border:1px solid var(--line-strong); }
+  .status-approved{ background:var(--accent); color:#fff; }
+  .status-rejected{ background:transparent; color:var(--ink-40); border:1px solid var(--line); text-decoration:line-through; }
+
+  .banner-editor{ background:var(--bg); border:1px solid var(--line); border-radius:var(--radius-md); padding:20px; margin-bottom:14px; }
+  .banner-editor h4{ font-size:13.5px; font-weight:700; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; }
+  .banner-editor .form-grid{ grid-template-columns:1fr 1fr; }
+  .save-banners-bar{ display:flex; justify-content:flex-end; margin-top:6px; }
+
+  .login-box{ max-width:360px; margin:90px auto; background:var(--bg); border:1px solid var(--line); border-radius:var(--radius-lg); padding:38px; text-align:center; }
+  .login-box .mark{ width:40px; height:40px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; margin:0 auto 18px; font-size:16px; font-weight:700; }
+  .login-box h2{ font-size:20px; margin-bottom:6px; }
+  .login-box p{ color:var(--ink-60); font-size:13px; margin-bottom:24px; }
+  .error-msg{ color:var(--ink); font-size:12.5px; margin-top:10px; font-weight:600; }
+
+  footer.site{ border-top:1px solid var(--line); padding:34px 24px; margin-top:0; font-size:12.5px; text-align:center; color:var(--ink-40); }
+  footer.site strong{ color:var(--ink); }
+
+  ::selection{ background:var(--ink); color:#fff; }
+</style>
+
+<!-- Google Tag Manager -->
+<!-- Replace GTM-XXXXXXX with your own container ID from tagmanager.google.com -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-XXXXXXX');</script>
+<!-- End Google Tag Manager -->
+
+<!-- Meta Pixel -->
+<!-- Replace YOUR_PIXEL_ID with your own pixel ID from business.facebook.com/events_manager -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', 'YOUR_PIXEL_ID');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel -->
+
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<!-- Replace GTM-XXXXXXX with your own container ID -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<header class="site">
+  <div class="bar">
+    <div class="wordmark">Chennai <span class="dim">Marathons</span></div>
+    <nav class="main" id="mainNav">
+      <a href="#" data-view="listings">Listings</a>
+      <a href="#" data-view="submit" class="btn-quiet-nav">List Your Event</a>
+    </nav>
+  </div>
+</header>
+
+<div id="app"></div>
+
+<footer class="site">
+  <strong>Chennai Marathons</strong> — the running calendar for Chennai.
+</footer>
+
+<script>
+(function(){
+
+  /* ---------- Analytics helpers ---------- */
+  // Pushes a virtual pageview into GTM's dataLayer so GA4 (configured inside
+  // GTM with a Custom Event trigger on "virtual_pageview") tracks SPA navigation.
+  function trackPageView(path, title){
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ event: "virtual_pageview", page_path: path, page_title: title });
+  }
+  // Pushes a named event into GTM's dataLayer (e.g. for a GA4 event trigger),
+  // and mirrors it to Meta Pixel if fbq has loaded.
+  function trackEvent(gtmEventName, fbEventName, params){
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push(Object.assign({ event: gtmEventName }, params || {}));
+    if(fbEventName && typeof fbq === "function") fbq("track", fbEventName, params || {});
+  }
+
+  /* ---------- Constants ---------- */
+  var DISTANCES = ["5K","10K","Half Marathon","Full Marathon","Ultra","Fun Run"];
+  var AREAS = ["Marina Beach","ECR","Besant Nagar","Anna Nagar","Guindy","OMR","Velachery","Adyar","Nungambakkam","T Nagar","Sholinganallur"];
+  var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+  var DEFAULT_BANNERS = [
+    { slot:1, title:"Your Race, Featured Here", body:"Reach thousands of Chennai runners searching for their next event.", imageUrl:"", linkUrl:"", ctaText:"Advertise Here" },
+    { slot:2, title:"Gear Up For Race Day", body:"Running shoes, hydration belts and more from local sports stores.", imageUrl:"", linkUrl:"", ctaText:"Advertise Here" },
+    { slot:3, title:"Advertise on this Directory", body:"Contact us to place a banner in this slot.", imageUrl:"", linkUrl:"", ctaText:"Advertise Here" }
+  ];
+
+  /* ---------- State ---------- */
+  var state = {
+    view: "listings",
+    listings: [],
+    banners: DEFAULT_BANNERS.slice(),
+    adminToken: sessionStorage.getItem("cm_admin_token") || null,
+    adminTab: "pending",
+    filters: { distances: [], area: "", month: "" },
+    filtersOpen: false,
+    submitStatus: null,
+    loading: true,
+    loginError: null,
+    selectedListingId: null,
+    lastTrackedDetailId: null
+  };
+
+  var app = document.getElementById("app");
+
+  /* ---------- API helpers ---------- */
+  function api(url, opts){
+    opts = opts || {};
+    var headers = Object.assign({ "Content-Type": "application/json" }, opts.headers || {});
+    return fetch(url, Object.assign({}, opts, { headers: headers }))
+      .then(function(res){
+        if(res.status === 401){
+          state.adminToken = null;
+          sessionStorage.removeItem("cm_admin_token");
+          state.view = "admin-login";
+          state.loginError = "Your session expired — please sign in again.";
+          render();
+          throw new Error("Unauthorized");
+        }
+        return res.json().then(function(body){
+          if(!res.ok) throw new Error(body.error || "Request failed");
+          return body;
+        });
+      });
+  }
+  function adminHeaders(){ return { "Authorization": "Bearer " + state.adminToken }; }
+
+  function mapListing(row){
+    return {
+      id: row.id, eventName: row.event_name, date: row.event_date, area: row.area,
+      distances: row.distances || [], description: row.description || "",
+      organizerName: row.organizer_name, organizerPhone: row.organizer_phone,
+      organizerEmail: row.organizer_email, website: row.website || "",
+      status: row.status, submittedAt: row.submitted_at
+    };
+  }
+  function mapBanner(row){
+    return { slot: row.slot, title: row.title || "", body: row.body || "", imageUrl: row.image_url || "", linkUrl: row.link_url || "", ctaText: row.cta_text || "Advertise Here" };
+  }
+
+  function loadPublicListings(){
+    return api("/api/listings").then(function(rows){ state.listings = rows.map(mapListing); });
+  }
+  function loadAllListingsForAdmin(){
+    return api("/api/listings?all=true", { headers: adminHeaders() }).then(function(rows){ state.listings = rows.map(mapListing); });
+  }
+  function loadBanners(){
+    return api("/api/banners").then(function(rows){ if(rows.length) state.banners = rows.map(mapBanner); });
+  }
+
+  /* ---------- Nav ---------- */
+  document.getElementById("mainNav").addEventListener("click", function(e){
+    var el = e.target.closest("[data-view]");
+    if(!el) return;
+    e.preventDefault();
+    goTo(el.getAttribute("data-view"));
+  });
+
+  function goTo(view){
+    state.submitStatus = null;
+    if(view === "admin"){
+      if(state.adminToken){
+        state.view = "admin";
+        loadAllListingsForAdmin().then(render);
+        return;
+      }
+      state.view = "admin-login"; render(); return;
+    }
+    if(location.hash) history.replaceState(null, "", location.pathname);
+    state.view = view;
+    if(view === "listings"){
+      trackPageView("/", "Chennai Marathons — Listings");
+      if(state.listings.length){ render(); return; }
+      state.loading = true; render(); loadPublicListings().then(function(){ state.loading = false; render(); }); return;
+    }
+    if(view === "submit"){ trackPageView("/list-your-event", "Submit a Chennai Race"); }
+    render();
+  }
+
+  function showDetail(id){
+    state.selectedListingId = id;
+    state.view = "detail";
+    history.pushState(null, "", "#/listing/" + id);
+    if(state.listings.length){ render(); return; }
+    state.loading = true; render();
+    loadPublicListings().then(function(){ state.loading = false; render(); });
+  }
+
+  function setActiveNav(){
+    document.querySelectorAll("#mainNav [data-view]").forEach(function(el){
+      el.classList.toggle("active", el.getAttribute("data-view") === state.view);
+    });
+  }
+
+  /* ---------- Render root ---------- */
+  function render(){
+    setActiveNav();
+    if(state.view === "listings") app.innerHTML = viewListings();
+    else if(state.view === "submit") app.innerHTML = viewSubmit();
+    else if(state.view === "detail") app.innerHTML = viewDetail();
+    else if(state.view === "admin-login") app.innerHTML = viewAdminLogin();
+    else if(state.view === "admin") app.innerHTML = viewAdmin();
+    bindViewEvents();
+    window.scrollTo({top:0, behavior:"instant"});
+  }
+
+  /* ---------- Helpers ---------- */
+  function fmtDate(d){
+    var dt = new Date(d + "T00:00:00");
+    if(isNaN(dt)) return d;
+    return dt.toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" });
+  }
+  function monthOf(d){ var dt = new Date(d + "T00:00:00"); return isNaN(dt) ? "" : MONTHS[dt.getMonth()]; }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function primaryDistShort(d){
+    var map = { "5K":"5", "10K":"10", "Half Marathon":"21", "Full Marathon":"42", "Ultra":"50+", "Fun Run":"FR" };
+    return map[d] || d;
+  }
+
+  function filteredApproved(){
+    return state.listings.filter(function(l){
+      if(l.status !== "approved") return false;
+      if(state.filters.distances.length && !l.distances.some(function(d){ return state.filters.distances.indexOf(d) !== -1; })) return false;
+      if(state.filters.area && l.area !== state.filters.area) return false;
+      if(state.filters.month && monthOf(l.date) !== state.filters.month) return false;
+      return true;
+    }).sort(function(a,b){ return new Date(a.date) - new Date(b.date); });
+  }
+
+  function chip(label, selected){
+    return '<button class="chip'+(selected?' selected':'')+'" data-val="'+esc(label)+'">'+esc(label)+'</button>';
+  }
+
+  /* ---------- Listings view ---------- */
+  function viewListings(){
+    if(state.loading){
+      return '<div class="page-section"><div class="empty-state"><h3>Loading races&hellip;</h3></div></div>';
+    }
+    var results = filteredApproved();
+    var distChips = DISTANCES.map(function(d){ return chip(d, state.filters.distances.indexOf(d) !== -1); }).join("");
+    var areaOpts = '<option value="">All areas</option>' + AREAS.map(function(a){ return '<option value="'+esc(a)+'"'+(state.filters.area===a?" selected":"")+'>'+esc(a)+'</option>'; }).join("");
+    var monthOpts = '<option value="">All months</option>' + MONTHS.map(function(m){ return '<option value="'+m+'"'+(state.filters.month===m?" selected":"")+'>'+m+'</option>'; }).join("");
+    var activeCount = state.filters.distances.length + (state.filters.area?1:0) + (state.filters.month?1:0);
+
+    var cards = results.length ? results.map(cardHTML).join("") : '<div class="empty-state"><h3>No races match these filters</h3><p>Try clearing a filter — new Chennai races are added regularly.</p></div>';
+
+    return ''
+    + '<section class="hero"><div class="hero-inner">'
+      + '<div>'
+        + '<div class="eyebrow">Chennai &middot; Running Calendar</div>'
+        + '<h1>Every Chennai marathon,<br>in one place.</h1>'
+        + '<p class="sub">The directory of 5Ks, 10Ks, half marathons and full marathons across Chennai — with routes, dates and organizer contacts.</p>'
+        + '<div class="hero-cta"><a class="btn btn-primary" href="#" data-view="submit">List Your Event</a></div>'
+      + '</div>'
+      + '<div class="hero-counters">'
+        + '<div class="counter-card"><div class="num">'+filteredApproved().length+'</div><div class="lbl">Live Listings</div></div>'
+        + '<div class="counter-card"><div class="num">'+AREAS.length+'</div><div class="lbl">Chennai Areas</div></div>'
+        + '<div class="counter-card"><div class="num">26&ndash;27</div><div class="lbl">Season</div></div>'
+      + '</div>'
+    + '</div></section>'
+    + '<div class="layout">'
+      + '<aside class="panel filters-col" id="filterPanel">'
+        + '<div class="filter-head"><h3>Filters</h3><button class="filter-toggle" id="filterToggle">'+(state.filtersOpen?"Hide":"Show")+(activeCount?' ('+activeCount+')':'')+'</button></div>'
+        + '<div class="filter-body'+(state.filtersOpen?"":" closed")+'" id="filterBody">'
+          + '<div class="filter-group"><span class="flabel">Distance</span><div class="chip-row">'+distChips+'</div></div>'
+          + '<div class="filter-group"><span class="flabel">Area</span><select id="areaFilter">'+areaOpts+'</select></div>'
+          + '<div class="filter-group"><span class="flabel">Month</span><select id="monthFilter">'+monthOpts+'</select></div>'
+          + '<button class="clear-filters" id="clearFilters">Clear all filters</button>'
+        + '</div>'
+      + '</aside>'
+      + '<main id="listingsMain">'
+        + '<div class="listings-head"><h2>Upcoming Races</h2><span class="count mono">'+results.length+' result'+(results.length===1?'':'s')+'</span></div>'
+        + cards
+      + '</main>'
+      + '<aside class="ads-col">' + state.banners.map(adSlotHTML).join("") + '</aside>'
+    + '</div>';
+  }
+
+  function adSlotHTML(b){
+    if(b.imageUrl){
+      var img = '<a href="'+esc(b.linkUrl||"#")+'" target="_blank" rel="noopener"><img src="'+esc(b.imageUrl)+'" alt="'+esc(b.title||"Advertisement")+'"></a>';
+      return '<div class="ad-slot filled"><span class="ad-label">Advertisement</span><div class="ad-body">'+img
+        + (b.title?'<strong>'+esc(b.title)+'</strong>':'')
+        + (b.linkUrl?'<a class="btn btn-outline btn-sm" href="'+esc(b.linkUrl)+'" target="_blank" rel="noopener">'+esc(b.ctaText||"Learn More")+'</a>':'')
+        + '</div></div>';
+    }
+    return '<div class="ad-slot"><span class="ad-label">Advertisement</span><div class="ad-body">'
+      + '<strong>'+esc(b.title)+'</strong><p>'+esc(b.body)+'</p>'
+      + '<a class="btn btn-outline btn-sm" href="mailto:ads@chennaimarathons.example">'+esc(b.ctaText||"Advertise Here")+'</a>'
+      + '</div></div>';
+  }
+
+  function cardHTML(l){
+    var primary = l.distances[0] || "";
+    var website = l.website ? '<a class="btn btn-outline btn-sm" href="'+esc(l.website)+'" target="_blank" rel="noopener">Website</a>' : "";
+    var tags = l.distances.map(function(d){ return '<span class="tag-pill">'+esc(d)+'</span>'; }).join("");
+    return ''
+    + '<article class="listing-card" data-id="'+l.id+'"><div class="listing-top">'
+      + '<div class="dist-badge"><div class="n">'+primaryDistShort(primary)+'</div><div class="u">KM</div></div>'
+      + '<div class="listing-main">'
+        + '<div class="listing-row1"><h3>'+esc(l.eventName)+'</h3><span class="listing-date">'+fmtDate(l.date)+'</span></div>'
+        + '<div class="listing-meta"><span>'+esc(l.area)+', Chennai</span></div>'
+        + '<p class="listing-desc">'+esc(l.description||"")+'</p>'
+        + '<div class="listing-tags">'+tags+'</div>'
+        + '<div class="listing-contact">'
+          + '<div class="organizer"><strong>'+esc(l.organizerName)+'</strong><span>'+esc(l.organizerPhone)+' &middot; '+esc(l.organizerEmail)+'</span></div>'
+          + '<div class="contact-btns">'
+            + '<a class="btn btn-primary btn-sm" href="tel:'+esc(l.organizerPhone)+'">Call</a>'
+            + '<a class="btn btn-outline btn-sm" href="mailto:'+esc(l.organizerEmail)+'">Email</a>'
+            + website
+          + '</div>'
+        + '</div>'
+      + '</div>'
+    + '</div></article>';
+  }
+
+  /* ---------- Detail view ---------- */
+  function getRelated(current){
+    var pool = state.listings.filter(function(l){ return l.status === "approved" && l.id !== current.id; });
+    var related = pool.filter(function(l){
+      return l.area === current.area || l.distances.some(function(d){ return current.distances.indexOf(d) !== -1; });
+    });
+    var haveIds = related.map(function(l){ return l.id; });
+    if(related.length < 3){
+      var fillers = pool.filter(function(l){ return haveIds.indexOf(l.id) === -1; })
+        .sort(function(a,b){ return new Date(a.date) - new Date(b.date); });
+      related = related.concat(fillers);
+    } else {
+      related = related.sort(function(a,b){ return new Date(a.date) - new Date(b.date); });
+    }
+    return related.slice(0,3);
+  }
+
+  function viewDetail(){
+    if(state.loading){
+      return '<div class="page-section"><div class="empty-state"><h3>Loading race&hellip;</h3></div></div>';
+    }
+    var l = state.listings.find(function(x){ return x.id === state.selectedListingId && x.status === "approved"; });
+    if(!l){
+      return '<div class="page-section"><div class="empty-state"><h3>Race not found</h3><p>This listing may have been removed or is awaiting approval.</p></div>'
+        + '<div style="text-align:center;margin-top:18px;"><a class="btn btn-outline" href="#" id="backToListings">&larr; All Listings</a></div></div>';
+    }
+    if(state.lastTrackedDetailId !== l.id){
+      state.lastTrackedDetailId = l.id;
+      trackPageView("/listing/" + l.id, l.eventName);
+      trackEvent("view_item", "ViewContent", { content_name: l.eventName, content_category: l.area });
+    }
+    var primary = l.distances[0] || "";
+    var tags = l.distances.map(function(d){ return '<span class="tag-pill">'+esc(d)+'</span>'; }).join("");
+    var website = l.website ? '<a class="btn btn-outline" href="'+esc(l.website)+'" target="_blank" rel="noopener">Visit Website</a>' : "";
+    var related = getRelated(l);
+    var relatedHTML = related.length
+      ? '<div class="related-grid" id="relatedGrid">' + related.map(cardHTML).join("") + '</div>'
+      : '<p style="color:var(--ink-60);font-size:14px;">No related races yet — check back soon.</p>';
+
+    return '<section class="page-section" style="max-width:820px;">'
+      + '<a class="back-link" href="#" id="backToListings">&larr; All Listings</a>'
+      + '<div class="detail-head">'
+        + '<div class="dist-badge-lg"><div class="n">'+primaryDistShort(primary)+'</div><div class="u">KM</div></div>'
+        + '<div>'
+          + '<div class="eyebrow">'+esc(l.area)+', Chennai &middot; '+fmtDate(l.date)+'</div>'
+          + '<h1 style="font-size:clamp(28px,5vw,42px);">'+esc(l.eventName)+'</h1>'
+          + '<div class="listing-tags" style="margin-top:12px;">'+tags+'</div>'
+        + '</div>'
+      + '</div>'
+      + (l.description ? '<p class="detail-desc">'+esc(l.description)+'</p>' : "")
+      + '<div class="card-form" style="margin-top:26px;">'
+        + '<h3 style="font-size:15px;margin-bottom:14px;">Organizer</h3>'
+        + '<div class="listing-contact" style="border-top:none;padding-top:0;margin-top:0;">'
+          + '<div class="organizer"><strong>'+esc(l.organizerName)+'</strong><span>'+esc(l.organizerPhone)+' &middot; '+esc(l.organizerEmail)+'</span></div>'
+          + '<div class="contact-btns">'
+            + '<a class="btn btn-primary" href="tel:'+esc(l.organizerPhone)+'">Call Organizer</a>'
+            + '<a class="btn btn-outline" href="mailto:'+esc(l.organizerEmail)+'">Email</a>'
+            + website
+          + '</div>'
+        + '</div>'
+      + '</div>'
+      + '<div class="related-section"><h2 style="font-size:20px;">Related Marathons</h2>'+relatedHTML+'</div>'
+    + '</section>'
+    + '<script type="application/ld+json">'+JSON.stringify({
+        "@context": "https://schema.org", "@type": "SportsEvent", "name": l.eventName,
+        "startDate": l.date, "description": l.description || undefined,
+        "location": { "@type": "Place", "name": l.area + ", Chennai", "address": "Chennai, Tamil Nadu, India" },
+        "organizer": { "@type": "Organization", "name": l.organizerName }
+      })+'</script>';
+  }
+
+  /* ---------- Submit view ---------- */
+  function viewSubmit(){
+    var distCheckboxes = DISTANCES.map(function(d){ return '<label><input type="checkbox" name="distances" value="'+d+'"> '+d+'</label>'; }).join("");
+    var areaOpts = '<option value="">Select area</option>' + AREAS.map(function(a){ return '<option value="'+esc(a)+'">'+esc(a)+'</option>'; }).join("");
+    var successBox = state.submitStatus === "ok" ? '<div class="success-box">Thanks — your event has been submitted and is awaiting review. It will appear on the listings page once approved.</div>' : "";
+    var errorBox = state.submitStatus === "error" ? '<div class="form-note" style="border-color:var(--accent);color:var(--accent-dark);">Something went wrong submitting your event. Please try again.</div>' : "";
+
+    return '<section class="page-section">'
+      + '<div class="page-head"><div class="eyebrow">List Your Event</div><h1>Submit a Chennai race</h1><p>Every submission is reviewed before it goes live on the public listings page.</p></div>'
+      + successBox + errorBox
+      + '<form class="card-form" id="submitForm">'
+        + '<div class="form-note">Fields marked * are required.</div>'
+        + '<div class="form-grid">'
+          + field("full", "Event Name*", '<input type="text" name="eventName" required placeholder="e.g. Marina Sunrise 10K">')
+          + field("", "Event Date*", '<input type="date" name="date" required>')
+          + field("", "Area / Neighbourhood*", '<select name="area" required>'+areaOpts+'</select>')
+          + field("full", "Distance Categories*", '<div class="checkbox-grid">'+distCheckboxes+'</div>')
+          + field("full", "Description", '<textarea name="description" rows="3" placeholder="Route, highlights, timing chip, hydration points..."></textarea>')
+          + field("", "Organizer / Club Name*", '<input type="text" name="organizerName" required placeholder="e.g. Chennai Coastal Runners Club">')
+          + field("", "Organizer Phone*", '<input type="tel" name="organizerPhone" required placeholder="+91 90000 00000">')
+          + field("", "Organizer Email*", '<input type="email" name="organizerEmail" required placeholder="race@yourclub.com">')
+          + field("", "Event Website (optional)", '<input type="text" name="website" placeholder="https://">')
+        + '</div>'
+        + '<div class="form-actions"><button type="submit" class="btn btn-primary" id="submitBtn">Submit for Review</button><span style="font-size:12.5px;color:var(--ink-60);">Contact details are published only after approval.</span></div>'
+      + '</form>'
+    + '</section>';
+  }
+  function field(cls, label, input){ return '<div class="field '+cls+'"><label>'+label+'</label>'+input+'</div>'; }
+
+  /* ---------- Admin login ---------- */
+  function viewAdminLogin(){
+    var err = state.loginError ? '<div class="error-msg">'+esc(state.loginError)+'</div>' : "";
+    return '<div class="login-box"><div class="mark">A</div><h2>Admin Access</h2><p>Sign in to review submissions and manage listings.</p>'
+      + '<form id="adminLoginForm">'
+        + '<div class="field" style="text-align:left;margin-bottom:14px;"><label>Password</label><input type="password" name="password" placeholder="Enter admin password" required></div>'
+        + '<button type="submit" class="btn btn-primary btn-block" id="loginBtn">Sign In</button>'
+        + '<div id="loginErrorBox">'+err+'</div>'
+      + '</form></div>';
+  }
+
+  /* ---------- Admin dashboard ---------- */
+  function viewAdmin(){
+    var pending = state.listings.filter(function(l){ return l.status === "pending"; });
+    var approved = state.listings.filter(function(l){ return l.status === "approved"; });
+    var rejected = state.listings.filter(function(l){ return l.status === "rejected"; });
+
+    var body;
+    if(state.adminTab === "banners"){
+      body = state.banners.map(bannerEditorHTML).join("") + '<div class="save-banners-bar"><button class="btn btn-primary btn-sm" id="saveBanners">Save Banner Settings</button></div>';
+    } else {
+      var current = state.adminTab === "pending" ? pending : state.adminTab === "approved" ? approved : rejected;
+      body = current.length ? current.map(adminRowHTML).join("") : '<div class="empty-state"><h3>Nothing here</h3><p>No listings in this category yet.</p></div>';
+    }
+
+    return '<div class="admin-shell">'
+      + '<div class="admin-topbar"><h1>Listings Management</h1><button class="btn btn-quiet btn-sm" id="logoutBtn">Log Out</button></div>'
+      + '<div class="admin-tabs">'
+        + '<button class="admin-tab'+(state.adminTab==="pending"?" active":"")+'" data-tab="pending">Pending ('+pending.length+')</button>'
+        + '<button class="admin-tab'+(state.adminTab==="approved"?" active":"")+'" data-tab="approved">Approved ('+approved.length+')</button>'
+        + '<button class="admin-tab'+(state.adminTab==="rejected"?" active":"")+'" data-tab="rejected">Rejected ('+rejected.length+')</button>'
+        + '<button class="admin-tab'+(state.adminTab==="banners"?" active":"")+'" data-tab="banners">Ad Banners</button>'
+      + '</div>'
+      + body
+    + '</div>';
+  }
+
+  function adminRowHTML(l){
+    var statusClass = l.status === "approved" ? "status-approved" : l.status === "pending" ? "status-pending" : "status-rejected";
+    var actions = "";
+    if(l.status === "pending"){
+      actions = '<button class="btn btn-primary btn-sm" data-act="approve" data-id="'+l.id+'">Approve</button><button class="btn btn-outline btn-sm" data-act="reject" data-id="'+l.id+'">Reject</button>';
+    } else if(l.status === "rejected"){
+      actions = '<button class="btn btn-primary btn-sm" data-act="approve" data-id="'+l.id+'">Approve</button><button class="btn btn-quiet btn-sm" data-act="delete" data-id="'+l.id+'">Delete</button>';
+    } else {
+      actions = '<button class="btn btn-outline btn-sm" data-act="reject" data-id="'+l.id+'">Unpublish</button><button class="btn btn-quiet btn-sm" data-act="delete" data-id="'+l.id+'">Delete</button>';
+    }
+    return '<div class="admin-row"><div class="info"><strong>'+esc(l.eventName)+'<span class="status-pill '+statusClass+'">'+l.status+'</span></strong>'
+      + '<span>'+fmtDate(l.date)+' &middot; '+esc(l.area)+' &middot; '+l.distances.join(", ")+' &middot; '+esc(l.organizerName)+' &middot; '+esc(l.organizerPhone)+'</span></div>'
+      + '<div class="contact-btns">'+actions+'</div></div>';
+  }
+
+  function bannerEditorHTML(b, i){
+    return '<div class="banner-editor" data-slot="'+b.slot+'"><h4>Ad Slot '+b.slot+'</h4>'
+      + '<div class="form-grid">'
+        + field("", "Headline", '<input type="text" data-field="title" value="'+esc(b.title)+'" placeholder="Banner headline">')
+        + field("", "Button Label", '<input type="text" data-field="ctaText" value="'+esc(b.ctaText)+'" placeholder="e.g. Learn More">')
+        + field("full", "Banner Image URL", '<input type="text" data-field="imageUrl" value="'+esc(b.imageUrl)+'" placeholder="https://... (leave blank to show placeholder text)">')
+        + field("full", "Link URL", '<input type="text" data-field="linkUrl" value="'+esc(b.linkUrl)+'" placeholder="https://advertiser-website.com">')
+        + field("full", "Placeholder Body Text", '<input type="text" data-field="body" value="'+esc(b.body)+'" placeholder="Shown only when no image is set">')
+      + '</div></div>';
+  }
+
+  /* ---------- Event binding ---------- */
+  function bindCardClicks(container){
+    if(!container) return;
+    container.addEventListener("click", function(e){
+      if(e.target.closest("a")) return;
+      var card = e.target.closest(".listing-card");
+      if(!card) return;
+      showDetail(card.getAttribute("data-id"));
+    });
+  }
+
+  function bindViewEvents(){
+    if(state.view === "listings" && !state.loading){
+      document.getElementById("filterToggle").addEventListener("click", function(){
+        state.filtersOpen = !state.filtersOpen;
+        document.getElementById("filterBody").classList.toggle("closed", !state.filtersOpen);
+        this.textContent = state.filtersOpen ? "Hide" : "Show";
+      });
+      document.getElementById("filterPanel").addEventListener("click", function(e){
+        var c = e.target.closest(".chip");
+        if(!c) return;
+        var val = c.getAttribute("data-val");
+        var idx = state.filters.distances.indexOf(val);
+        if(idx === -1) state.filters.distances.push(val); else state.filters.distances.splice(idx,1);
+        render();
+      });
+      document.getElementById("areaFilter").addEventListener("change", function(e){ state.filters.area = e.target.value; render(); });
+      document.getElementById("monthFilter").addEventListener("change", function(e){ state.filters.month = e.target.value; render(); });
+      document.getElementById("clearFilters").addEventListener("click", function(){ state.filters = { distances: [], area: "", month: "" }; render(); });
+      document.querySelectorAll('[data-view="submit"]').forEach(function(el){
+        el.addEventListener("click", function(e){ e.preventDefault(); goTo("submit"); });
+      });
+      bindCardClicks(document.getElementById("listingsMain"));
+    }
+
+    if(state.view === "detail" && !state.loading){
+      var back = document.getElementById("backToListings");
+      if(back) back.addEventListener("click", function(e){ e.preventDefault(); goTo("listings"); });
+      bindCardClicks(document.getElementById("relatedGrid"));
+    }
+
+    if(state.view === "submit"){
+      document.getElementById("submitForm").addEventListener("submit", function(e){
+        e.preventDefault();
+        var f = e.target;
+        var distances = Array.prototype.slice.call(f.querySelectorAll('input[name="distances"]:checked')).map(function(i){ return i.value; });
+        if(!distances.length){ alert("Please select at least one distance category."); return; }
+        var payload = {
+          eventName: f.eventName.value.trim(), date: f.date.value, area: f.area.value, distances: distances,
+          description: f.description.value.trim(), organizerName: f.organizerName.value.trim(),
+          organizerPhone: f.organizerPhone.value.trim(), organizerEmail: f.organizerEmail.value.trim(),
+          website: f.website.value.trim()
+        };
+        var btn = document.getElementById("submitBtn");
+        btn.textContent = "Submitting...";
+        api("/api/listings", { method: "POST", body: JSON.stringify(payload) })
+          .then(function(){
+            trackEvent("generate_lead", "Lead", { content_name: payload.eventName, content_category: payload.area });
+            state.submitStatus = "ok"; render();
+          })
+          .catch(function(){ state.submitStatus = "error"; render(); });
+      });
+    }
+
+    if(state.view === "admin-login"){
+      document.getElementById("adminLoginForm").addEventListener("submit", function(e){
+        e.preventDefault();
+        var btn = document.getElementById("loginBtn");
+        btn.textContent = "Signing in...";
+        fetch("/api/admin-login", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ password: e.target.password.value }) })
+          .then(function(res){ return res.json().then(function(body){ return { ok: res.ok, body: body }; }); })
+          .then(function(r){
+            if(r.ok){
+              state.adminToken = r.body.token;
+              sessionStorage.setItem("cm_admin_token", state.adminToken);
+              state.loginError = null;
+              state.view = "admin";
+              loadAllListingsForAdmin().then(render);
+            } else {
+              document.getElementById("loginErrorBox").innerHTML = '<div class="error-msg">'+esc(r.body.error || "Incorrect password.")+'</div>';
+              btn.textContent = "Sign In";
+            }
+          })
+          .catch(function(){
+            document.getElementById("loginErrorBox").innerHTML = '<div class="error-msg">Could not reach the server. Try again.</div>';
+            btn.textContent = "Sign In";
+          });
+      });
+    }
+
+    if(state.view === "admin"){
+      document.getElementById("logoutBtn").addEventListener("click", function(){
+        state.adminToken = null;
+        sessionStorage.removeItem("cm_admin_token");
+        goTo("listings");
+      });
+      document.querySelectorAll(".admin-tab").forEach(function(t){
+        t.addEventListener("click", function(){ state.adminTab = t.getAttribute("data-tab"); render(); });
+      });
+      document.querySelectorAll("[data-act]").forEach(function(btn){
+        btn.addEventListener("click", function(){
+          var id = btn.getAttribute("data-id"), act = btn.getAttribute("data-act");
+          var req;
+          if(act === "approve") req = api("/api/listings/"+id, { method:"PATCH", headers: adminHeaders(), body: JSON.stringify({status:"approved"}) });
+          else if(act === "reject") req = api("/api/listings/"+id, { method:"PATCH", headers: adminHeaders(), body: JSON.stringify({status:"rejected"}) });
+          else if(act === "delete") req = api("/api/listings/"+id, { method:"DELETE", headers: adminHeaders() });
+          req.then(function(){ return loadAllListingsForAdmin(); }).then(render).catch(function(){});
+        });
+      });
+      var saveBtn = document.getElementById("saveBanners");
+      if(saveBtn){
+        saveBtn.addEventListener("click", function(){
+          document.querySelectorAll(".banner-editor").forEach(function(ed){
+            var slot = parseInt(ed.getAttribute("data-slot"), 10);
+            var b = state.banners.find(function(x){ return x.slot === slot; });
+            ed.querySelectorAll("[data-field]").forEach(function(inp){ b[inp.getAttribute("data-field")] = inp.value.trim(); });
+          });
+          saveBtn.textContent = "Saving...";
+          api("/api/banners", { method:"PUT", headers: adminHeaders(), body: JSON.stringify(state.banners) })
+            .then(function(){ saveBtn.textContent = "Saved ✓"; setTimeout(function(){ saveBtn.textContent = "Save Banner Settings"; }, 1500); })
+            .catch(function(){ saveBtn.textContent = "Save Banner Settings"; });
+        });
+      }
+    }
+  }
+
+  /* ---------- Boot & routing ---------- */
+  function routeFromHash(){
+    var h = location.hash;
+    if(h === "#admin"){ goTo("admin"); return; }
+    var m = h.match(/^#\/listing\/(.+)$/);
+    if(m){ state.selectedListingId = decodeURIComponent(m[1]); state.view = "detail";
+      if(state.listings.length){ render(); } else { state.loading = true; render(); loadPublicListings().then(function(){ state.loading = false; render(); }); }
+      return;
+    }
+    goTo("listings");
+  }
+  window.addEventListener("popstate", routeFromHash);
+  loadBanners().then(routeFromHash);
+
+})();
+</script>
+</body>
+</html>
