@@ -636,6 +636,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   function cardHTML(l){
     var primary = l.distances[0] || "";
     var website = l.website ? '<a class="btn btn-outline btn-sm" href="'+esc(l.website)+'" target="_blank" rel="noopener">Website</a>' : "";
+    var callBtn = l.organizerPhone ? '<a class="btn btn-primary btn-sm" href="tel:'+esc(l.organizerPhone)+'">Call</a>' : "";
+    var emailBtn = l.organizerEmail ? '<a class="btn btn-outline btn-sm" href="mailto:'+esc(l.organizerEmail)+'">Email</a>' : "";
+    var contactLine = [l.organizerPhone, l.organizerEmail].filter(Boolean).join(" &middot; ");
     var tags = l.distances.map(function(d){ return '<span class="tag-pill">'+esc(d)+'</span>'; }).join("");
     return ''
     + '<article class="listing-card" data-id="'+l.id+'"><div class="listing-top">'
@@ -646,11 +649,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         + '<p class="listing-desc">'+esc(l.description||"")+'</p>'
         + '<div class="listing-tags">'+tags+'</div>'
         + '<div class="listing-contact">'
-          + '<div class="organizer"><strong>'+esc(l.organizerName)+'</strong><span>'+esc(l.organizerPhone)+' &middot; '+esc(l.organizerEmail)+'</span></div>'
+          + '<div class="organizer"><strong>'+esc(l.organizerName)+'</strong>'+(contactLine ? '<span>'+contactLine+'</span>' : '')+'</div>'
           + '<div class="contact-btns">'
-            + '<a class="btn btn-primary btn-sm" href="tel:'+esc(l.organizerPhone)+'">Call</a>'
-            + '<a class="btn btn-outline btn-sm" href="mailto:'+esc(l.organizerEmail)+'">Email</a>'
-            + website
+            + callBtn + emailBtn + website
           + '</div>'
         + '</div>'
       + '</div>'
@@ -714,10 +715,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       + '<div class="card-form" style="margin-top:26px;">'
         + '<h3 style="font-size:15px;margin-bottom:14px;">Organizer</h3>'
         + '<div class="listing-contact" style="border-top:none;padding-top:0;margin-top:0;">'
-          + '<div class="organizer"><strong>'+esc(l.organizerName)+'</strong><span>'+esc(l.organizerPhone)+' &middot; '+esc(l.organizerEmail)+'</span></div>'
+          + '<div class="organizer"><strong>'+esc(l.organizerName)+'</strong>'+([l.organizerPhone,l.organizerEmail].filter(Boolean).length ? '<span>'+[esc(l.organizerPhone),esc(l.organizerEmail)].filter(Boolean).join(" &middot; ")+'</span>' : '')+'</div>'
           + '<div class="contact-btns">'
-            + '<a class="btn btn-primary" href="tel:'+esc(l.organizerPhone)+'">Call Organizer</a>'
-            + '<a class="btn btn-outline" href="mailto:'+esc(l.organizerEmail)+'">Email</a>'
+            + (l.organizerPhone ? '<a class="btn btn-primary" href="tel:'+esc(l.organizerPhone)+'">Call Organizer</a>' : '')
+            + (l.organizerEmail ? '<a class="btn btn-outline" href="mailto:'+esc(l.organizerEmail)+'">Email</a>' : '')
             + website
           + '</div>'
         + '</div>'
