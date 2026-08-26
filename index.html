@@ -286,12 +286,12 @@
 </style>
 
 <!-- Google Tag Manager -->
-<!-- Replace GTM-XXXXXXX with your own container ID from tagmanager.google.com -->
+<!-- Replace GTM-KNXQNTLR with your own container ID from tagmanager.google.com -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-XXXXXXX');</script>
+})(window,document,'script','dataLayer','GTM-KNXQNTLR');</script>
 <!-- End Google Tag Manager -->
 
 <!-- Meta Pixel -->
@@ -316,8 +316,8 @@ src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID&ev=PageView&noscript=1"
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
-<!-- Replace GTM-XXXXXXX with your own container ID -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX"
+<!-- Replace GTM-KNXQNTLR with your own container ID -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KNXQNTLR"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 
@@ -479,22 +479,30 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     goTo(el.getAttribute("data-view"));
   });
 
-  function goTo(view){
+  // pathFor(view): the real URL path for a given view name.
+  function pathFor(view){
+    if(view === "listings") return "/";
+    if(view === "submit") return "/list-your-event";
+    if(view === "admin") return "/admin";
+    if(SCOPES[view]) return "/" + view;
+    return "/";
+  }
+
+  // Applies a view (state + render + data load), WITHOUT touching the URL.
+  // Used both by goTo() (which also pushes a new URL) and by routeFromPath()
+  // (which is reacting to a URL that's already correct — from a direct visit
+  // or the browser's back/forward buttons).
+  function applyView(view){
     state.submitStatus = null;
     if(view === "admin"){
-      if(state.adminToken){
-        state.view = "admin";
-        loadAllListingsForAdmin().then(render);
-        return;
-      }
+      if(state.adminToken){ state.view = "admin"; loadAllListingsForAdmin().then(render); return; }
       state.view = "admin-login"; render(); return;
     }
-    if(location.hash) history.replaceState(null, "", location.pathname);
     state.view = view;
     if(SCOPES[view]){
       state.scope = view;
       state.filters = { distances: [], area: "", month: "" };
-      trackPageView(view === "listings" ? "/" : "/" + view, SCOPES[view].label + " Marathons — Listings");
+      trackPageView(pathFor(view), SCOPES[view].label + " Marathons — Listings");
       if(state.listings.length){ render(); return; }
       render(); loadPublicListingsSafe().then(render); return;
     }
@@ -502,10 +510,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     render();
   }
 
+  function goTo(view){
+    history.pushState(null, "", pathFor(view));
+    applyView(view);
+  }
+
   function showDetail(id){
     state.selectedListingId = id;
     state.view = "detail";
-    history.pushState(null, "", "#/listing/" + id);
+    history.pushState(null, "", "/listing/" + id);
     if(state.listings.length){ render(); return; }
     render();
     loadPublicListingsSafe().then(render);
@@ -984,19 +997,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   }
 
   /* ---------- Boot & routing ---------- */
-  function routeFromHash(){
-    var h = location.hash;
-    if(h === "#admin"){ goTo("admin"); return; }
-    var m = h.match(/^#\/listing\/(.+)$/);
-    if(m){ state.selectedListingId = decodeURIComponent(m[1]); state.view = "detail";
+  function routeFromPath(){
+    var path = location.pathname.replace(/\/$/, "") || "/";
+    if(path === "/admin"){ applyView("admin"); return; }
+    var m = path.match(/^\/listing\/(.+)$/);
+    if(m){
+      state.selectedListingId = decodeURIComponent(m[1]); state.view = "detail";
       if(state.listings.length){ render(); } else { render(); loadPublicListingsSafe().then(render); }
       return;
     }
-    if(h === "#tamil-nadu" || h === "#india"){ goTo(h.slice(1)); return; }
-    goTo("listings");
+    if(path === "/tamil-nadu" || path === "/india"){ applyView(path.slice(1)); return; }
+    if(path === "/list-your-event"){ applyView("submit"); return; }
+    applyView("listings");
   }
-  window.addEventListener("popstate", routeFromHash);
-  loadBanners().catch(function(err){ console.error("Failed to load ad banners:", err); }).then(routeFromHash);
+  window.addEventListener("popstate", routeFromPath);
+  loadBanners().catch(function(err){ console.error("Failed to load ad banners:", err); }).then(routeFromPath);
 
 })();
 </script>
