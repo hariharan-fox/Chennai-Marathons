@@ -29,21 +29,24 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'Missing field: ' + f });
       }
     }
-    const { data, error } = await supabase
-      .from('listings')
-      .insert({
-        event_name: b.eventName,
-        event_date: b.date,
-        area: b.area,
-        distances: b.distances,
-        description: b.description || '',
-        organizer_name: b.organizerName,
-        organizer_phone: b.organizerPhone,
-        organizer_email: b.organizerEmail,
-        website: b.website || '',
-        status: 'pending'
-      })
-      .select();
+    // city/state are optional — public submissions default to Chennai/Tamil Nadu
+    // via the database column defaults set in migrations/002-add-city-state.sql.
+    const insertRow = {
+      event_name: b.eventName,
+      event_date: b.date,
+      area: b.area,
+      distances: b.distances,
+      description: b.description || '',
+      organizer_name: b.organizerName,
+      organizer_phone: b.organizerPhone,
+      organizer_email: b.organizerEmail,
+      website: b.website || '',
+      status: 'pending'
+    };
+    if (b.city) insertRow.city = b.city;
+    if (b.state) insertRow.state = b.state;
+
+    const { data, error } = await supabase.from('listings').insert(insertRow).select();
     if (error) return res.status(500).json({ error: error.message });
     return res.status(201).json(data[0]);
   }
