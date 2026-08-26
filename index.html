@@ -212,14 +212,25 @@
   .ad-slot.filled{ background:#fff; }
   .ad-slot.filled .ad-body{ padding:14px; }
 
-  /* Ad banners on the race detail page: a row that wraps naturally on
-     smaller screens down to one column, instead of a fixed sidebar. */
-  .detail-ads{
-    display:flex; flex-wrap:wrap; gap:16px; margin-top:44px; padding-top:28px; border-top:1px solid var(--line);
+  /* Detail page: content + ads sidebar, matching the listings page pattern.
+     Collapses to a single column (ads below content) on smaller screens. */
+  .detail-layout{
+    max-width:1100px; margin:0 auto; padding:44px 24px 80px;
+    display:grid; grid-template-columns:minmax(0,1fr) 260px; gap:26px; align-items:start;
   }
-  .detail-ads .ad-slot{ flex:1 1 220px; max-width:280px; margin-bottom:0; }
+  .detail-layout .detail-ads-col{ position:sticky; top:90px; }
+  @media (max-width:900px){
+    .detail-layout{ grid-template-columns:1fr; padding-left:24px; padding-right:24px; }
+    .detail-layout .detail-ads-col{ position:static; order:2; }
+    .detail-layout .detail-main{ order:1; }
+  }
+  .detail-ads-col .ad-slot{ margin-bottom:16px; }
+  @media (max-width:900px){
+    .detail-ads-col{ display:flex; flex-wrap:wrap; gap:16px; margin-top:10px; padding-top:28px; border-top:1px solid var(--line); }
+    .detail-ads-col .ad-slot{ flex:1 1 220px; max-width:280px; margin-bottom:0; }
+  }
   @media (max-width:640px){
-    .detail-ads .ad-slot{ flex:1 1 100%; max-width:none; }
+    .detail-ads-col .ad-slot{ flex:1 1 100%; max-width:none; }
   }
 
   /* ---------- Pages / forms ---------- */
@@ -711,31 +722,33 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       ? '<div class="related-grid" id="relatedGrid">' + related.map(cardHTML).join("") + '</div>'
       : '<p style="color:var(--ink-60);font-size:14px;">No related races yet — check back soon.</p>';
 
-    return '<section class="page-section" style="max-width:820px;">'
-      + '<a class="back-link" href="#" id="backToListings">&larr; All Listings</a>'
-      + '<div class="detail-head">'
-        + '<div class="dist-badge-lg"><div class="n">'+primaryDistShort(primary)+'</div><div class="u">KM</div></div>'
-        + '<div>'
-          + '<div class="eyebrow">'+locationLabel(l)+' &middot; '+fmtDate(l.date)+'</div>'
-          + '<h1 style="font-size:clamp(28px,5vw,42px);">'+esc(l.eventName)+'</h1>'
-          + '<div class="listing-tags" style="margin-top:12px;">'+tags+'</div>'
-        + '</div>'
-      + '</div>'
-      + (l.description ? '<p class="detail-desc">'+esc(l.description)+'</p>' : "")
-      + '<div class="card-form" style="margin-top:26px;">'
-        + '<h3 style="font-size:15px;margin-bottom:14px;">Organizer</h3>'
-        + '<div class="listing-contact" style="border-top:none;padding-top:0;margin-top:0;">'
-          + '<div class="organizer"><strong>'+esc(l.organizerName)+'</strong>'+([l.organizerPhone,l.organizerEmail].filter(Boolean).length ? '<span>'+[esc(l.organizerPhone),esc(l.organizerEmail)].filter(Boolean).join(" &middot; ")+'</span>' : '')+'</div>'
-          + '<div class="contact-btns">'
-            + (l.organizerPhone ? '<a class="btn btn-primary" href="tel:'+esc(l.organizerPhone)+'">Call Organizer</a>' : '')
-            + (l.organizerEmail ? '<a class="btn btn-outline" href="mailto:'+esc(l.organizerEmail)+'">Email</a>' : '')
-            + website
+    return '<div class="detail-layout">'
+      + '<section class="detail-main">'
+        + '<a class="back-link" href="#" id="backToListings">&larr; All Listings</a>'
+        + '<div class="detail-head">'
+          + '<div class="dist-badge-lg"><div class="n">'+primaryDistShort(primary)+'</div><div class="u">KM</div></div>'
+          + '<div>'
+            + '<div class="eyebrow">'+locationLabel(l)+' &middot; '+fmtDate(l.date)+'</div>'
+            + '<h1 style="font-size:clamp(28px,5vw,42px);">'+esc(l.eventName)+'</h1>'
+            + '<div class="listing-tags" style="margin-top:12px;">'+tags+'</div>'
           + '</div>'
         + '</div>'
-      + '</div>'
-      + '<div class="related-section"><h2 style="font-size:20px;">Related Marathons</h2>'+relatedHTML+'</div>'
-      + '<div class="detail-ads">'+state.banners.map(adSlotHTML).join("")+'</div>'
-    + '</section>'
+        + (l.description ? '<p class="detail-desc">'+esc(l.description)+'</p>' : "")
+        + '<div class="card-form" style="margin-top:26px;">'
+          + '<h3 style="font-size:15px;margin-bottom:14px;">Organizer</h3>'
+          + '<div class="listing-contact" style="border-top:none;padding-top:0;margin-top:0;">'
+            + '<div class="organizer"><strong>'+esc(l.organizerName)+'</strong>'+([l.organizerPhone,l.organizerEmail].filter(Boolean).length ? '<span>'+[esc(l.organizerPhone),esc(l.organizerEmail)].filter(Boolean).join(" &middot; ")+'</span>' : '')+'</div>'
+            + '<div class="contact-btns">'
+              + (l.organizerPhone ? '<a class="btn btn-primary" href="tel:'+esc(l.organizerPhone)+'">Call Organizer</a>' : '')
+              + (l.organizerEmail ? '<a class="btn btn-outline" href="mailto:'+esc(l.organizerEmail)+'">Email</a>' : '')
+              + website
+            + '</div>'
+          + '</div>'
+        + '</div>'
+        + '<div class="related-section"><h2 style="font-size:20px;">Related Marathons</h2>'+relatedHTML+'</div>'
+      + '</section>'
+      + '<aside class="detail-ads-col">'+state.banners.map(adSlotHTML).join("")+'</aside>'
+    + '</div>'
     + '<script type="application/ld+json">'+JSON.stringify({
         "@context": "https://schema.org", "@type": "SportsEvent", "name": l.eventName,
         "startDate": l.date, "description": l.description || undefined,
