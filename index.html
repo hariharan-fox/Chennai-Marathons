@@ -212,6 +212,16 @@
   .ad-slot.filled{ background:#fff; }
   .ad-slot.filled .ad-body{ padding:14px; }
 
+  /* Ad banners on the race detail page: a row that wraps naturally on
+     smaller screens down to one column, instead of a fixed sidebar. */
+  .detail-ads{
+    display:flex; flex-wrap:wrap; gap:16px; margin-top:44px; padding-top:28px; border-top:1px solid var(--line);
+  }
+  .detail-ads .ad-slot{ flex:1 1 220px; max-width:280px; margin-bottom:0; }
+  @media (max-width:640px){
+    .detail-ads .ad-slot{ flex:1 1 100%; max-width:none; }
+  }
+
   /* ---------- Pages / forms ---------- */
   .page-section{ max-width:720px; margin:0 auto; padding:60px 24px 90px; }
   .page-head{ margin-bottom:30px; }
@@ -724,6 +734,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         + '</div>'
       + '</div>'
       + '<div class="related-section"><h2 style="font-size:20px;">Related Marathons</h2>'+relatedHTML+'</div>'
+      + '<div class="detail-ads">'+state.banners.map(adSlotHTML).join("")+'</div>'
     + '</section>'
     + '<script type="application/ld+json">'+JSON.stringify({
         "@context": "https://schema.org", "@type": "SportsEvent", "name": l.eventName,
