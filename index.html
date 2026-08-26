@@ -304,7 +304,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div class="bar">
     <div class="wordmark">Chennai <span class="dim">Marathons</span></div>
     <nav class="main" id="mainNav">
-      <a href="#" data-view="listings">Listings</a>
+      <a href="#" data-view="listings">Chennai</a>
+      <a href="#" data-view="tamil-nadu">Tamil Nadu</a>
+      <a href="#" data-view="india">India</a>
       <a href="#" data-view="submit" class="btn-quiet-nav">List Your Event</a>
     </nav>
   </div>
@@ -339,6 +341,36 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   var AREAS = ["Marina Beach","ECR","Besant Nagar","Anna Nagar","Guindy","OMR","Velachery","Adyar","Nungambakkam","T Nagar","Sholinganallur"];
   var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
+  // Each region "scope" the site supports. 'chennai' filters by the existing
+  // neighborhood-level Area field; 'tamil-nadu' and 'india' filter by the new
+  // city/state columns and show a dynamic City filter instead of a fixed Area list.
+  var SCOPES = {
+    "listings": {
+      key: "chennai", label: "Chennai",
+      eyebrow: "Chennai \u00b7 Running Calendar",
+      heading: "Every Chennai marathon,<br>in one place.",
+      sub: "The directory of 5Ks, 10Ks, half marathons and full marathons across Chennai \u2014 with routes, dates and organizer contacts.",
+      matches: function(l){ return l.city === "Chennai"; },
+      areaLabel: "Area", areaOptions: null // null = use fixed AREAS list
+    },
+    "tamil-nadu": {
+      key: "tamil-nadu", label: "Tamil Nadu",
+      eyebrow: "Tamil Nadu \u00b7 Running Calendar",
+      heading: "Every Tamil Nadu marathon,<br>in one place.",
+      sub: "Marathons, half marathons and runs across Tamil Nadu \u2014 Chennai, Coimbatore, Madurai, Trichy and beyond.",
+      matches: function(l){ return l.state === "Tamil Nadu"; },
+      areaLabel: "City", areaOptions: "dynamic"
+    },
+    "india": {
+      key: "india", label: "India",
+      eyebrow: "India \u00b7 Running Calendar",
+      heading: "Every Indian marathon,<br>in one place.",
+      sub: "The pan-India calendar of marathons, half marathons, 10Ks and trail ultras \u2014 every state, every city.",
+      matches: function(l){ return true; },
+      areaLabel: "City", areaOptions: "dynamic"
+    }
+  };
+
   var DEFAULT_BANNERS = [
     { slot:1, title:"Your Race, Featured Here", body:"Reach thousands of Chennai runners searching for their next event.", imageUrl:"", linkUrl:"", ctaText:"Advertise Here" },
     { slot:2, title:"Gear Up For Race Day", body:"Running shoes, hydration belts and more from local sports stores.", imageUrl:"", linkUrl:"", ctaText:"Advertise Here" },
@@ -348,6 +380,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   /* ---------- State ---------- */
   var state = {
     view: "listings",
+    scope: "listings",
     listings: [],
     banners: DEFAULT_BANNERS.slice(),
     adminToken: sessionStorage.getItem("cm_admin_token") || null,
@@ -358,7 +391,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     loading: true,
     loginError: null,
     selectedListingId: null,
-    lastTrackedDetailId: null
+    lastTrackedDetailId: null,
+    loadError: false
   };
 
   var app = document.getElementById("app");
@@ -388,6 +422,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   function mapListing(row){
     return {
       id: row.id, eventName: row.event_name, date: row.event_date, area: row.area,
+      city: row.city || "Chennai", state: row.state || "Tamil Nadu",
       distances: row.distances || [], description: row.description || "",
       organizerName: row.organizer_name, organizerPhone: row.organizer_phone,
       organizerEmail: row.organizer_email, website: row.website || "",
@@ -400,6 +435,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   function loadPublicListings(){
     return api("/api/listings").then(function(rows){ state.listings = rows.map(mapListing); });
+  }
+  // Always resolves — never leaves the UI stuck on "Loading" if the request fails.
+  function loadPublicListingsSafe(){
+    state.loading = true; state.loadError = false;
+    return loadPublicListings()
+      .then(function(){ state.loading = false; })
+      .catch(function(err){ state.loading = false; state.loadError = true; console.error("Failed to load listings:", err); });
   }
   function loadAllListingsForAdmin(){
     return api("/api/listings?all=true", { headers: adminHeaders() }).then(function(rows){ state.listings = rows.map(mapListing); });
@@ -428,10 +470,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
     if(location.hash) history.replaceState(null, "", location.pathname);
     state.view = view;
-    if(view === "listings"){
-      trackPageView("/", "Chennai Marathons — Listings");
+    if(SCOPES[view]){
+      state.scope = view;
+      state.filters = { distances: [], area: "", month: "" };
+      trackPageView(view === "listings" ? "/" : "/" + view, SCOPES[view].label + " Marathons — Listings");
       if(state.listings.length){ render(); return; }
-      state.loading = true; render(); loadPublicListings().then(function(){ state.loading = false; render(); }); return;
+      render(); loadPublicListingsSafe().then(render); return;
     }
     if(view === "submit"){ trackPageView("/list-your-event", "Submit a Chennai Race"); }
     render();
@@ -442,8 +486,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     state.view = "detail";
     history.pushState(null, "", "#/listing/" + id);
     if(state.listings.length){ render(); return; }
-    state.loading = true; render();
-    loadPublicListings().then(function(){ state.loading = false; render(); });
+    render();
+    loadPublicListingsSafe().then(render);
   }
 
   function setActiveNav(){
@@ -455,7 +499,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   /* ---------- Render root ---------- */
   function render(){
     setActiveNav();
-    if(state.view === "listings") app.innerHTML = viewListings();
+    if(SCOPES[state.view]) app.innerHTML = viewListings();
     else if(state.view === "submit") app.innerHTML = viewSubmit();
     else if(state.view === "detail") app.innerHTML = viewDetail();
     else if(state.view === "admin-login") app.innerHTML = viewAdminLogin();
@@ -477,44 +521,75 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     return map[d] || d;
   }
 
+  function currentScope(){ return SCOPES[state.scope] || SCOPES["listings"]; }
+
   function filteredApproved(){
+    var scope = currentScope();
     return state.listings.filter(function(l){
       if(l.status !== "approved") return false;
+      if(!scope.matches(l)) return false;
       if(state.filters.distances.length && !l.distances.some(function(d){ return state.filters.distances.indexOf(d) !== -1; })) return false;
-      if(state.filters.area && l.area !== state.filters.area) return false;
+      if(state.filters.area){
+        var matchVal = scope.areaOptions === "dynamic" ? l.city : l.area;
+        if(matchVal !== state.filters.area) return false;
+      }
       if(state.filters.month && monthOf(l.date) !== state.filters.month) return false;
       return true;
     }).sort(function(a,b){ return new Date(a.date) - new Date(b.date); });
+  }
+
+  // Distinct cities within the current scope's full (unfiltered-by-area) result set,
+  // for the dynamic City dropdown on Tamil Nadu / India pages.
+  function citiesInScope(scope){
+    var set = {};
+    state.listings.forEach(function(l){
+      if(l.status === "approved" && scope.matches(l)) set[l.city] = true;
+    });
+    return Object.keys(set).sort();
   }
 
   function chip(label, selected){
     return '<button class="chip'+(selected?' selected':'')+'" data-val="'+esc(label)+'">'+esc(label)+'</button>';
   }
 
-  /* ---------- Listings view ---------- */
+  /* ---------- Listings view (Chennai / Tamil Nadu / India, scope-driven) ---------- */
   function viewListings(){
     if(state.loading){
       return '<div class="page-section"><div class="empty-state"><h3>Loading races&hellip;</h3></div></div>';
     }
+    if(state.loadError){
+      return '<div class="page-section"><div class="empty-state"><h3>Couldn&rsquo;t load races</h3><p>Something went wrong reaching the server. This is usually temporary.</p>'
+        + '<button class="btn btn-primary btn-sm" id="retryLoad" style="margin-top:14px;">Try Again</button></div></div>';
+    }
+    var scope = currentScope();
     var results = filteredApproved();
     var distChips = DISTANCES.map(function(d){ return chip(d, state.filters.distances.indexOf(d) !== -1); }).join("");
-    var areaOpts = '<option value="">All areas</option>' + AREAS.map(function(a){ return '<option value="'+esc(a)+'"'+(state.filters.area===a?" selected":"")+'>'+esc(a)+'</option>'; }).join("");
+
+    var areaOpts;
+    if(scope.areaOptions === "dynamic"){
+      var cities = citiesInScope(scope);
+      areaOpts = '<option value="">All cities</option>' + cities.map(function(c){ return '<option value="'+esc(c)+'"'+(state.filters.area===c?" selected":"")+'>'+esc(c)+'</option>'; }).join("");
+    } else {
+      areaOpts = '<option value="">All areas</option>' + AREAS.map(function(a){ return '<option value="'+esc(a)+'"'+(state.filters.area===a?" selected":"")+'>'+esc(a)+'</option>'; }).join("");
+    }
     var monthOpts = '<option value="">All months</option>' + MONTHS.map(function(m){ return '<option value="'+m+'"'+(state.filters.month===m?" selected":"")+'>'+m+'</option>'; }).join("");
     var activeCount = state.filters.distances.length + (state.filters.area?1:0) + (state.filters.month?1:0);
 
-    var cards = results.length ? results.map(cardHTML).join("") : '<div class="empty-state"><h3>No races match these filters</h3><p>Try clearing a filter — new Chennai races are added regularly.</p></div>';
+    var cards = results.length ? results.map(cardHTML).join("") : '<div class="empty-state"><h3>No races match these filters</h3><p>Try clearing a filter — new races are added regularly.</p></div>';
+    var countLabel = scope.areaOptions === "dynamic" ? citiesInScope(scope).length : AREAS.length;
+    var countUnit = scope.areaOptions === "dynamic" ? "Cities" : "Chennai Areas";
 
     return ''
     + '<section class="hero"><div class="hero-inner">'
       + '<div>'
-        + '<div class="eyebrow">Chennai &middot; Running Calendar</div>'
-        + '<h1>Every Chennai marathon,<br>in one place.</h1>'
-        + '<p class="sub">The directory of 5Ks, 10Ks, half marathons and full marathons across Chennai — with routes, dates and organizer contacts.</p>'
+        + '<div class="eyebrow">'+scope.eyebrow+'</div>'
+        + '<h1>'+scope.heading+'</h1>'
+        + '<p class="sub">'+scope.sub+'</p>'
         + '<div class="hero-cta"><a class="btn btn-primary" href="#" data-view="submit">List Your Event</a></div>'
       + '</div>'
       + '<div class="hero-counters">'
-        + '<div class="counter-card"><div class="num">'+filteredApproved().length+'</div><div class="lbl">Live Listings</div></div>'
-        + '<div class="counter-card"><div class="num">'+AREAS.length+'</div><div class="lbl">Chennai Areas</div></div>'
+        + '<div class="counter-card"><div class="num">'+results.length+'</div><div class="lbl">Live Listings</div></div>'
+        + '<div class="counter-card"><div class="num">'+countLabel+'</div><div class="lbl">'+countUnit+'</div></div>'
         + '<div class="counter-card"><div class="num">26&ndash;27</div><div class="lbl">Season</div></div>'
       + '</div>'
     + '</div></section>'
@@ -523,7 +598,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         + '<div class="filter-head"><h3>Filters</h3><button class="filter-toggle" id="filterToggle">'+(state.filtersOpen?"Hide":"Show")+(activeCount?' ('+activeCount+')':'')+'</button></div>'
         + '<div class="filter-body'+(state.filtersOpen?"":" closed")+'" id="filterBody">'
           + '<div class="filter-group"><span class="flabel">Distance</span><div class="chip-row">'+distChips+'</div></div>'
-          + '<div class="filter-group"><span class="flabel">Area</span><select id="areaFilter">'+areaOpts+'</select></div>'
+          + '<div class="filter-group"><span class="flabel">'+scope.areaLabel+'</span><select id="areaFilter">'+areaOpts+'</select></div>'
           + '<div class="filter-group"><span class="flabel">Month</span><select id="monthFilter">'+monthOpts+'</select></div>'
           + '<button class="clear-filters" id="clearFilters">Clear all filters</button>'
         + '</div>'
@@ -550,6 +625,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       + '</div></div>';
   }
 
+  // Shows neighborhood-level detail for Chennai races (which have `area` filled in),
+  // and falls back to city, state for everywhere else.
+  function locationLabel(l){
+    if(l.area && l.city === "Chennai") return esc(l.area) + ", Chennai";
+    if(l.area) return esc(l.area) + ", " + esc(l.city);
+    return esc(l.city) + ", " + esc(l.state);
+  }
+
   function cardHTML(l){
     var primary = l.distances[0] || "";
     var website = l.website ? '<a class="btn btn-outline btn-sm" href="'+esc(l.website)+'" target="_blank" rel="noopener">Website</a>' : "";
@@ -559,7 +642,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       + '<div class="dist-badge"><div class="n">'+primaryDistShort(primary)+'</div><div class="u">KM</div></div>'
       + '<div class="listing-main">'
         + '<div class="listing-row1"><h3>'+esc(l.eventName)+'</h3><span class="listing-date">'+fmtDate(l.date)+'</span></div>'
-        + '<div class="listing-meta"><span>'+esc(l.area)+', Chennai</span></div>'
+        + '<div class="listing-meta"><span>'+locationLabel(l)+'</span></div>'
         + '<p class="listing-desc">'+esc(l.description||"")+'</p>'
         + '<div class="listing-tags">'+tags+'</div>'
         + '<div class="listing-contact">'
@@ -578,7 +661,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   function getRelated(current){
     var pool = state.listings.filter(function(l){ return l.status === "approved" && l.id !== current.id; });
     var related = pool.filter(function(l){
-      return l.area === current.area || l.distances.some(function(d){ return current.distances.indexOf(d) !== -1; });
+      return l.city === current.city || l.distances.some(function(d){ return current.distances.indexOf(d) !== -1; });
     });
     var haveIds = related.map(function(l){ return l.id; });
     if(related.length < 3){
@@ -595,6 +678,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     if(state.loading){
       return '<div class="page-section"><div class="empty-state"><h3>Loading race&hellip;</h3></div></div>';
     }
+    if(state.loadError){
+      return '<div class="page-section"><div class="empty-state"><h3>Couldn&rsquo;t load this race</h3><p>Something went wrong reaching the server. This is usually temporary.</p>'
+        + '<button class="btn btn-primary btn-sm" id="retryLoad" style="margin-top:14px;">Try Again</button></div></div>';
+    }
     var l = state.listings.find(function(x){ return x.id === state.selectedListingId && x.status === "approved"; });
     if(!l){
       return '<div class="page-section"><div class="empty-state"><h3>Race not found</h3><p>This listing may have been removed or is awaiting approval.</p></div>'
@@ -603,7 +690,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     if(state.lastTrackedDetailId !== l.id){
       state.lastTrackedDetailId = l.id;
       trackPageView("/listing/" + l.id, l.eventName);
-      trackEvent("view_item", "ViewContent", { content_name: l.eventName, content_category: l.area });
+      trackEvent("view_item", "ViewContent", { content_name: l.eventName, content_category: l.city });
     }
     var primary = l.distances[0] || "";
     var tags = l.distances.map(function(d){ return '<span class="tag-pill">'+esc(d)+'</span>'; }).join("");
@@ -618,7 +705,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       + '<div class="detail-head">'
         + '<div class="dist-badge-lg"><div class="n">'+primaryDistShort(primary)+'</div><div class="u">KM</div></div>'
         + '<div>'
-          + '<div class="eyebrow">'+esc(l.area)+', Chennai &middot; '+fmtDate(l.date)+'</div>'
+          + '<div class="eyebrow">'+locationLabel(l)+' &middot; '+fmtDate(l.date)+'</div>'
           + '<h1 style="font-size:clamp(28px,5vw,42px);">'+esc(l.eventName)+'</h1>'
           + '<div class="listing-tags" style="margin-top:12px;">'+tags+'</div>'
         + '</div>'
@@ -640,7 +727,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     + '<script type="application/ld+json">'+JSON.stringify({
         "@context": "https://schema.org", "@type": "SportsEvent", "name": l.eventName,
         "startDate": l.date, "description": l.description || undefined,
-        "location": { "@type": "Place", "name": l.area + ", Chennai", "address": "Chennai, Tamil Nadu, India" },
+        "location": { "@type": "Place", "name": (l.area ? l.area + ", " : "") + l.city, "address": l.city + ", " + l.state + ", India" },
         "organizer": { "@type": "Organization", "name": l.organizerName }
       })+'<\/script>';
   }
@@ -722,7 +809,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       actions = '<button class="btn btn-outline btn-sm" data-act="reject" data-id="'+l.id+'">Unpublish</button><button class="btn btn-quiet btn-sm" data-act="delete" data-id="'+l.id+'">Delete</button>';
     }
     return '<div class="admin-row"><div class="info"><strong>'+esc(l.eventName)+'<span class="status-pill '+statusClass+'">'+l.status+'</span></strong>'
-      + '<span>'+fmtDate(l.date)+' &middot; '+esc(l.area)+' &middot; '+l.distances.join(", ")+' &middot; '+esc(l.organizerName)+' &middot; '+esc(l.organizerPhone)+'</span></div>'
+      + '<span>'+fmtDate(l.date)+' &middot; '+locationLabel(l)+' &middot; '+l.distances.join(", ")+' &middot; '+esc(l.organizerName)+' &middot; '+esc(l.organizerPhone)+'</span></div>'
       + '<div class="contact-btns">'+actions+'</div></div>';
   }
 
@@ -749,7 +836,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   }
 
   function bindViewEvents(){
-    if(state.view === "listings" && !state.loading){
+    var retryBtn = document.getElementById("retryLoad");
+    if(retryBtn){
+      retryBtn.addEventListener("click", function(){
+        state.loadError = false;
+        if(state.view === "detail") loadPublicListingsSafe().then(render);
+        else goTo("listings");
+      });
+    }
+    if(SCOPES[state.view] && !state.loading && !state.loadError){
       document.getElementById("filterToggle").addEventListener("click", function(){
         state.filtersOpen = !state.filtersOpen;
         document.getElementById("filterBody").classList.toggle("closed", !state.filtersOpen);
@@ -869,13 +964,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     if(h === "#admin"){ goTo("admin"); return; }
     var m = h.match(/^#\/listing\/(.+)$/);
     if(m){ state.selectedListingId = decodeURIComponent(m[1]); state.view = "detail";
-      if(state.listings.length){ render(); } else { state.loading = true; render(); loadPublicListings().then(function(){ state.loading = false; render(); }); }
+      if(state.listings.length){ render(); } else { render(); loadPublicListingsSafe().then(render); }
       return;
     }
+    if(h === "#tamil-nadu" || h === "#india"){ goTo(h.slice(1)); return; }
     goTo("listings");
   }
   window.addEventListener("popstate", routeFromHash);
-  loadBanners().then(routeFromHash);
+  loadBanners().catch(function(err){ console.error("Failed to load ad banners:", err); }).then(routeFromHash);
 
 })();
 </script>
