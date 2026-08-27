@@ -342,10 +342,21 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script>
 (function(){
 
+  /* ---------- SEO: per-route title + meta description ---------- */
+  // Real paths mean Google renders and indexes each URL separately now, so
+  // each one needs its own <title>/<meta description> rather than sharing
+  // the static ones baked into the HTML.
+  function setMeta(title, description){
+    document.title = title;
+    var m = document.querySelector('meta[name="description"]');
+    if(m && description) m.setAttribute("content", description);
+  }
+
   /* ---------- Analytics helpers ---------- */
   // Pushes a virtual pageview into GTM's dataLayer so GA4 (configured inside
   // GTM with a Custom Event trigger on "virtual_pageview") tracks SPA navigation.
-  function trackPageView(path, title){
+  function trackPageView(path, title, description){
+    setMeta(title, description);
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({ event: "virtual_pageview", page_path: path, page_title: title });
   }
@@ -371,6 +382,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       eyebrow: "Chennai \u00b7 Running Calendar",
       heading: "Every Chennai marathon,<br>in one place.",
       sub: "The directory of 5Ks, 10Ks, half marathons and full marathons across Chennai \u2014 with routes, dates and organizer contacts.",
+      pageTitle: "Chennai Marathon 2026\u201327 | Upcoming Marathons in Chennai",
+      metaDescription: "Find every upcoming marathon in Chennai in one place \u2014 the Chennai Marathon and more, with dates, routes, distances and organizer contacts.",
       matches: function(l){ return l.city === "Chennai"; },
       areaLabel: "Area", areaOptions: null // null = use fixed AREAS list
     },
@@ -379,6 +392,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       eyebrow: "Tamil Nadu \u00b7 Running Calendar",
       heading: "Every Tamil Nadu marathon,<br>in one place.",
       sub: "Marathons, half marathons and runs across Tamil Nadu \u2014 Chennai, Coimbatore, Madurai, Trichy and beyond.",
+      pageTitle: "Tamil Nadu Marathon Calendar 2026\u201327 | Upcoming Races",
+      metaDescription: "Every upcoming marathon, half marathon and 10K across Tamil Nadu \u2014 Chennai, Coimbatore, Madurai, Trichy, Salem and more, with dates and routes.",
       matches: function(l){ return l.state === "Tamil Nadu"; },
       areaLabel: "City", areaOptions: "dynamic"
     },
@@ -387,6 +402,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       eyebrow: "India \u00b7 Running Calendar",
       heading: "Every Indian marathon,<br>in one place.",
       sub: "The pan-India calendar of marathons, half marathons, 10Ks and trail ultras \u2014 every state, every city.",
+      pageTitle: "India Marathon Calendar 2026\u201327 | Every Upcoming Race",
+      metaDescription: "The pan-India calendar of upcoming marathons, half marathons, 10Ks and trail ultras \u2014 every state, every city, with dates and routes.",
       matches: function(l){ return true; },
       areaLabel: "City", areaOptions: "dynamic"
     }
@@ -502,11 +519,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     if(SCOPES[view]){
       state.scope = view;
       state.filters = { distances: [], area: "", month: "" };
-      trackPageView(pathFor(view), SCOPES[view].label + " Marathons — Listings");
+      trackPageView(pathFor(view), SCOPES[view].pageTitle, SCOPES[view].metaDescription);
       if(state.listings.length){ render(); return; }
       render(); loadPublicListingsSafe().then(render); return;
     }
-    if(view === "submit"){ trackPageView("/list-your-event", "Submit a Chennai Race"); }
+    if(view === "submit"){
+      trackPageView("/list-your-event", "Submit a Race Event | Chennai Marathons",
+        "List your marathon, half marathon, 10K or fun run — anywhere in India. Every submission is reviewed before it goes live.");
+    }
     render();
   }
 
@@ -719,12 +739,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
     var l = state.listings.find(function(x){ return x.id === state.selectedListingId && x.status === "approved"; });
     if(!l){
+      setMeta("Race Not Found | Chennai Marathons", "This listing may have been removed or is awaiting approval.");
       return '<div class="page-section"><div class="empty-state"><h3>Race not found</h3><p>This listing may have been removed or is awaiting approval.</p></div>'
         + '<div style="text-align:center;margin-top:18px;"><a class="btn btn-outline" href="#" id="backToListings">&larr; All Listings</a></div></div>';
     }
     if(state.lastTrackedDetailId !== l.id){
       state.lastTrackedDetailId = l.id;
-      trackPageView("/listing/" + l.id, l.eventName);
+      var regionTag = l.city === "Chennai" ? "Chennai Marathon" : (l.state === "Tamil Nadu" ? "Tamil Nadu Marathons" : "India Marathons");
+      var detailTitle = l.eventName + " — " + fmtDate(l.date) + " | " + regionTag;
+      var detailDesc = l.eventName + " in " + l.city + (l.state ? ", " + l.state : "") + " on " + fmtDate(l.date) +
+        ". Distances: " + l.distances.join(", ") + ". Route, timing and organizer details.";
+      trackPageView("/listing/" + l.id, detailTitle, detailDesc);
       trackEvent("view_item", "ViewContent", { content_name: l.eventName, content_category: l.city });
     }
     var primary = l.distances[0] || "";
@@ -773,19 +798,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   /* ---------- Submit view ---------- */
   function viewSubmit(){
     var distCheckboxes = DISTANCES.map(function(d){ return '<label><input type="checkbox" name="distances" value="'+d+'"> '+d+'</label>'; }).join("");
-    var areaOpts = '<option value="">Select area</option>' + AREAS.map(function(a){ return '<option value="'+esc(a)+'">'+esc(a)+'</option>'; }).join("");
     var successBox = state.submitStatus === "ok" ? '<div class="success-box">Thanks — your event has been submitted and is awaiting review. It will appear on the listings page once approved.</div>' : "";
     var errorBox = state.submitStatus === "error" ? '<div class="form-note" style="border-color:var(--accent);color:var(--accent-dark);">Something went wrong submitting your event. Please try again.</div>' : "";
 
     return '<section class="page-section">'
-      + '<div class="page-head"><div class="eyebrow">List Your Event</div><h1>Submit a Chennai race</h1><p>Every submission is reviewed before it goes live on the public listings page.</p></div>'
+      + '<div class="page-head"><div class="eyebrow">List Your Event</div><h1>Submit your race</h1><p>Every submission is reviewed before it goes live. Marathons anywhere in India are welcome — not just Chennai.</p></div>'
       + successBox + errorBox
       + '<form class="card-form" id="submitForm">'
         + '<div class="form-note">Fields marked * are required.</div>'
         + '<div class="form-grid">'
           + field("full", "Event Name*", '<input type="text" name="eventName" required placeholder="e.g. Marina Sunrise 10K">')
           + field("", "Event Date*", '<input type="date" name="date" required>')
-          + field("", "Area / Neighbourhood*", '<select name="area" required>'+areaOpts+'</select>')
+          + field("", "City*", '<input type="text" name="city" required placeholder="e.g. Chennai, Coimbatore, Mumbai">')
+          + field("", "State*", '<input type="text" name="state" required placeholder="e.g. Tamil Nadu">')
+          + field("full", "Area / Neighbourhood (optional)", '<input type="text" name="area" placeholder="e.g. Marina Beach — leave blank if not applicable">')
           + field("full", "Distance Categories*", '<div class="checkbox-grid">'+distCheckboxes+'</div>')
           + field("full", "Description", '<textarea name="description" rows="3" placeholder="Route, highlights, timing chip, hydration points..."></textarea>')
           + field("", "Organizer / Club Name*", '<input type="text" name="organizerName" required placeholder="e.g. Chennai Coastal Runners Club">')
@@ -918,7 +944,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         var distances = Array.prototype.slice.call(f.querySelectorAll('input[name="distances"]:checked')).map(function(i){ return i.value; });
         if(!distances.length){ alert("Please select at least one distance category."); return; }
         var payload = {
-          eventName: f.eventName.value.trim(), date: f.date.value, area: f.area.value, distances: distances,
+          eventName: f.eventName.value.trim(), date: f.date.value, area: f.area.value.trim(),
+          city: f.city.value.trim(), state: f.state.value.trim(), distances: distances,
           description: f.description.value.trim(), organizerName: f.organizerName.value.trim(),
           organizerPhone: f.organizerPhone.value.trim(), organizerEmail: f.organizerEmail.value.trim(),
           website: f.website.value.trim()
@@ -927,7 +954,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         btn.textContent = "Submitting...";
         api("/api/listings", { method: "POST", body: JSON.stringify(payload) })
           .then(function(){
-            trackEvent("generate_lead", "Lead", { content_name: payload.eventName, content_category: payload.area });
+            trackEvent("generate_lead", "Lead", { content_name: payload.eventName, content_category: payload.city });
             state.submitStatus = "ok"; render();
           })
           .catch(function(){ state.submitStatus = "error"; render(); });
