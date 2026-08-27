@@ -1,0 +1,16 @@
+# Chennai Marathons
+
+> The directory of marathons, half marathons, 10Ks and fun runs across Chennai, Tamil Nadu, and India — with dates, routes, distances and organizer contact details for each race.
+
+Chennai Marathons is a running-event directory. Each listing includes the event name, date, city, state, distance categories, and organizer contact information where available. New races are added and reviewed on an ongoing basis.
+
+## Core Pages
+
+- [Chennai Marathons](https://chennai-marathons.vercel.app/): Marathons and races within Chennai city, filterable by neighborhood, distance category and month.
+- [Tamil Nadu Marathon Calendar](https://chennai-marathons.vercel.app/tamil-nadu): Races across Tamil Nadu, including Chennai, Coimbatore, Madurai, Trichy, Salem and more.
+- [India Marathon Calendar](https://chennai-marathons.vercel.app/india): The pan-India calendar of marathons, half marathons, 10Ks and trail ultras across every state.
+- [List Your Event](https://chennai-marathons.vercel.app/list-your-event): Submit a race to be listed — open to organizers anywhere in India, not only Chennai.
+
+## Machine-readable data
+
+- [Sitemap](https://chennai-marathons.vercel.app/sitemap.xml): The full, always-current list of every approved race's individual page, generated live from the underlying database.
